@@ -1,6 +1,6 @@
 import prisma from "../lib/prisma";
 import { Location } from "../../generated/prisma/client";
-import { validateLocationInput } from "../lib/helper";
+import { validateLocationInput } from "../lib/validate";
 
 const addLocation = async (data: Location) => {
 	const { name, address, square_ft, sitting_capacity, open_date, is_active } =
