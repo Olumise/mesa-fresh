@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String
+  emailVerified Boolean   @default(false) @map("email_verified")
+  image         String?
+  phone         String
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  roleId        String
+  role          DBRole    @relation(fields: [roleId], references: [id])
+  sessions      Session[]
+  accounts      Account[]
+  staffs        Staff[]
+
+  @@unique([email])
+  @@map("users")
+}
+
+model DBRole {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  users       User[]
+
+  @@unique([name])
+  @@map("db_roles")
+}
+
+model Staff {
+  id          String    @id @default(uuid())
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id])
+  location_id String
+  location    Location  @relation(fields: [location_id], references: [id])
+  date_joined DateTime
+  date_left   DateTime?
+  is_active   Boolean
+  role_id     String
+  role        StaffRole @relation(fields: [role_id], references: [id])
+  managers    Manager[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([user_id, location_id])
+  @@map("staffs")
+}
+
+model StaffRole {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  staff       Staff[]
+
+  @@unique(name)
+  @@map("staff_roles")
+}
+
+model Location {
+  id               String         @id @default(uuid())
+  name             String
+  address          String
+  staffs           Staff[]
+  square_ft        Int
+  sitting_capacity Int
+  open_date        DateTime
+  is_active        Boolean
+  managers         Manager[]
+  location_menus   LocationMenu[]
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@unique(name)
+  @@map("locations")
+}
+
+model Manager {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  staff_id    String
+  staff       Staff    @relation(fields: [staff_id], references: [id])
+  location_id String
+  location    Location @relation(fields: [location_id], references: [id])
+
+  @@unique([staff_id, location_id])
+  @@map("managers")
+}
+
+model Menu {
+  id              String         @id @default(uuid())
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  name            String         @unique
+  price           Decimal
+  description     String
+  image           String
+  category_id     String
+  category        MenuCategory   @relation(fields: [category_id], references: [id])
+  calories        Int
+  prep_time       String
+  is_customizable Boolean
+  location_menus  LocationMenu[]
+  menu_addons     MenuAddon[]
+
+  @@map("menus")
+}
+
+model Addon {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  name        String      @unique
+  price       Decimal     @default(0.0)
+  is_free     Boolean
+  menu_addons MenuAddon[]
+
+  @@map("addons")
+}
+
+model MenuAddon {
+  menu_id   String
+  menu      Menu     @relation(fields: [menu_id], references: [id])
+  addon_id  String
+  addon     Addon    @relation(fields: [addon_id], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([menu_id, addon_id])
+  @@map("menu_addons")
+}
+
+model LocationMenu {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  location_id  String
+  location     Location @relation(fields: [location_id], references: [id])
+  menu_id      String
+  menu         Menu     @relation(fields: [menu_id], references: [id])
+  is_available Boolean
+  quantity     Int
+
+  location_ingredients LocationIngredient[]
+
+  @@unique([location_id, menu_id])
+  @@map("location_menus")
+}
+
+model MenuCategory {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  name        String   @unique
+  description String?
+  menus       Menu[]
+
+  @@map("menu_categories")
+}
+
+model Ingredient {
+  id                   String               @id @default(uuid())
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  name                 String               @unique
+  description          String?
+  location_ingredients LocationIngredient[]
+
+  @@map("ingredients")
+}
+
+model LocationIngredient {
+  location_menu_id String
+  location_menu    LocationMenu   @relation(fields: [location_menu_id], references: [id])
+  ingredient_id    String
+  ingredient       Ingredient     @relation(fields: [ingredient_id], references: [id])
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  quantity         Int
+  unit             IngredientUnit
+
+  @@id([location_menu_id])
+  @@map("location_ingredients")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum IngredientUnit {
+  GRAM     @map("gram")
+  KILOGRAM @map("kilogram")
+}
