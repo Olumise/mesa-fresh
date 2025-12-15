@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build" : "tsc",
+    "build": "tsc",
     "start": "nodemon dist/src/index.js",
     "dev": "nodemon --watch src --ext ts --exec \"npm run build && npm start\" "
   },
@@ -21,7 +21,9 @@
     "express": "^5.2.1",
     "nodemon": "^3.1.11",
     "pg": "^8.16.3",
-    "typescript": "^5.9.3"
+    "prisma-better-errors": "^1.0.4",
+    "typescript": "^5.9.3",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/node": "^25.0.1",

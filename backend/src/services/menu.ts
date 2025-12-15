@@ -11,6 +11,7 @@ import {
 	validateMenuWithCategoryInput,
 	validateLocationMenuInputs,
 	validateNewAddonInputs,
+	validateMenuCategoryInput,
 } from "../lib/validate";
 
 export interface MenuWithAddons extends Menu {
@@ -22,10 +23,9 @@ export interface MenuWithCategory extends Omit<MenuWithAddons, "category_id"> {
 }
 
 const addMenuCategory = async (data: MenuCategory) => {
+	validateMenuCategoryInput(data);
 	const { name, description } = data;
-	if (!name) {
-		throw new Error("Category Name is required!");
-	}
+
 	const newCategory = await prisma.menuCategory.create({
 		data,
 	});
