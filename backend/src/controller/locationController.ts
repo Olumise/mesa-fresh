@@ -16,7 +16,7 @@ export const addLocationController = async (
 		const newLocation = await addLocation(req.body);
 		res.json({
 			message: "Location created successfully!",
-			location: newLocation,
+			data: newLocation,
 		});
 	} catch (err: any) {
 		next(err);
@@ -32,7 +32,7 @@ export const getAllLocationsController = async (
 		const allLocation = await getAllLocation();
 		res.json({
 			no_of_locations: allLocation.length,
-			locations: allLocation,
+			data: allLocation,
 		});
 	} catch (err) {
 		next(err);
@@ -45,7 +45,7 @@ export const getUniqueLocationController = async (
 	next: NextFunction
 ) => {
 	try {
-		const {id} = req.params;
+		const { id } = req.params;
 		const location = await getUniqueLocation(id);
 		res.send(location);
 	} catch (err) {

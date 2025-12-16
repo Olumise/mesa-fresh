@@ -6,8 +6,8 @@ import {
 	MenuCategory,
 } from "../../generated/prisma/client";
 import { LocationSchemaCreate } from "../schemas/location.js";
-import { CreateAddonSchema, CreateMenuCategorySchema, MenuAndCategorySchemaCreate, MenuSchemaCreate } from "../schemas/menu.js";
-import { MenuWithCategory } from "../services/menu";
+import { CreateAddonSchema, CreateLocationMenuSchema, CreateMenuCategorySchema, MenuAndCategorySchemaCreate, MenuSchemaCreate } from "../schemas/menu.js";
+import { MenuWithCategory, UpdatedMenu } from "../services/menu";
 
 import { capitalizeString } from "./helper.js";
 
@@ -19,7 +19,7 @@ export function validateLocationInput(data: Location) {
 
 }
 
-export function validateMenuInput(data: Menu) {
+export function validateMenuInput(data: UpdatedMenu) {
 	if (!data) {
 		throw new Error("No data in your request!");
 	}
@@ -37,13 +37,7 @@ export function validateLocationMenuInputs(data: LocationMenu) {
 	if (!data) {
 		throw new Error("No data in your request!");
 	}
-	const { location_id, menu_id, is_available, quantity } = data;
-
-	if (!location_id) throw new Error("Location_id is required");
-	if (!menu_id) throw new Error("Menu_id is required");
-	if (is_available === undefined || is_available === null)
-		throw new Error("Is_available is required");
-	if (!quantity) throw new Error("Quantity is required");
+return CreateLocationMenuSchema.parse(data)
 }
 
 export function validateMenuCategoryInput(data:MenuCategory){

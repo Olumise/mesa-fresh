@@ -28,6 +28,7 @@ export const ErrorHandler = (
 			title: err.title,
 			message: err.message,
 			metaData: err.metaData,
+			...(process.env.MODE === "development" && { issues: err.stack })
 		});
 	}
 	if (err instanceof z.ZodError) {
@@ -51,6 +52,6 @@ export const ErrorHandler = (
 	return res.status(500).json({
 		message: err.message,
 		url: req.url,
-		...(process.env.MODE === "production" && { stack: err.stack }),
+		...(process.env.MODE === "development" && { stack: err.stack }),
 	});
 };
