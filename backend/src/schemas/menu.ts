@@ -84,6 +84,36 @@ export const LocationMenuSchema = z.object({
 		.nonnegative("Quantity cannot be negative"),
 });
 
+export const IngredientUnitSchema = z.enum([
+	"GRAM",
+	"KILOGRAM",
+	"MILLILITER",
+	"LITER",
+	"PIECE",
+	"SLICE",
+	"CLOVE",
+	"LEAF",
+]);
+
+
+
+export const LocationIngredientSchema = z.object({
+	location_menu_id: z
+		.string("Location Menu ID should be a string")
+		.uuid("Location Menu ID should be a valid UUID"),
+
+	ingredient_id: z
+		.string("Ingredient ID should be a string")
+		.uuid("Ingredient ID should be a valid UUID"),
+
+	quantity: z
+		.number("Quantity should be a number")
+		.int("Quantity should be an integer")
+		.nonnegative("Quantity cannot be negative"),
+
+	unit: IngredientUnitSchema,
+});
+
 export const MenuSchemaCreate = MenuSchema;
 export const MenuAndCategorySchemaCreate = MenuSchema.omit({
 	category_id: true,
@@ -100,3 +130,6 @@ export const CreateAddonSchema = AddonSchema;
 export const UpdateAddonSchema = CreateAddonSchema.partial();
 export const CreateLocationMenuSchema = LocationMenuSchema;
 export const UpdateLocationMenuSchema = CreateLocationMenuSchema.partial();
+export const CreateLocationIngredientSchema = LocationIngredientSchema;
+export const UpdateLocationIngredientSchema =
+	CreateLocationIngredientSchema.partial();

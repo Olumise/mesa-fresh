@@ -13,7 +13,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model User {
   id            String    @id @default(uuid())
   name          String
@@ -252,6 +251,12 @@ model Verification {
 }
 
 enum IngredientUnit {
-  GRAM     @map("gram")
-  KILOGRAM @map("kilogram")
+  GRAM       @map("gram")
+  KILOGRAM   @map("kilogram")
+  MILLILITER @map("milliliter")
+  LITER      @map("liter")
+  PIECE      @map("piece")
+  SLICE      @map("slice")
+  CLOVE      @map("clove")
+  LEAF       @map("leaf")
 }

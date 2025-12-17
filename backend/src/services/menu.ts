@@ -5,12 +5,15 @@ import {
 	LocationMenu,
 	Addon,
 	MenuAddon,
+	Ingredient,
+	LocationIngredient,
 } from "../../generated/prisma/client.js";
 import {
 	validateMenuInput,
 	validateLocationMenuInputs,
 	validateNewAddonInputs,
 	validateMenuCategoryInput,
+	validateLocationMenuIngredient,
 } from "../lib/validate.js";
 import { prismaError } from "prisma-better-errors";
 
@@ -144,10 +147,7 @@ export const addLocationMenu = async (data: LocationMenu) => {
 	}
 };
 
-export const getLocationMenu = async (locationId?: string) => {
-	if (!locationId) {
-		throw new Error("Location Id is required!");
-	}
+export const getLocationMenu = async (locationId: string) => {
 	try {
 		const locationMenu = await prisma.locationMenu.findMany({
 			where: {
@@ -159,6 +159,73 @@ export const getLocationMenu = async (locationId?: string) => {
 			},
 		});
 		return locationMenu;
+	} catch (err: any) {
+		throw new prismaError(err);
+	}
+};
+
+export const addIngredient = async (data: Ingredient) => {
+	const { name, description } = data;
+	if (!name) {
+		throw new Error("Ingredient Name is required!");
+	}
+	try {
+		const newIngredient = await prisma.ingredient.create({
+			data,
+		});
+		return newIngredient;
+	} catch (err: any) {
+		throw new prismaError(err);
+	}
+};
+
+export const addLocationIngredient = async (data: LocationIngredient) => {
+	const { location_menu_id, ingredient_id, quantity, unit } = data;
+	validateLocationMenuIngredient(data);
+
+	try {
+		const locationIngredient = await prisma.locationIngredient.create({
+			data,
+			include: {
+				location_menu: {
+					include: {
+						location: true,
+						menu: true,
+					},
+				},
+				ingredient: true,
+			},
+		});
+		return locationIngredient;
+	} catch (err: any) {
+		throw new prismaError(err);
+	}
+};
+
+export const getAllIngredients = async () => {
+	try {
+		return await prisma.ingredient.findMany();
+	} catch (err: any) {
+		throw new prismaError(err);
+	}
+};
+
+export const getLocationIngredients = async (locationMenuId: string) => {
+	try {
+		return await prisma.locationIngredient.findMany({
+			where: {
+				location_menu_id: locationMenuId,
+			},
+			include: {
+				location_menu: {
+					include: {
+						location: true,
+						menu: true,
+					},
+				},
+				ingredient: true,
+			},
+		});
 	} catch (err: any) {
 		throw new prismaError(err);
 	}

@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import {
+	addIngredient,
+	addLocationIngredient,
 	addLocationMenu,
 	addMenuCategory,
 	addNewAddon,
 	addNewMenu,
+	getAllIngredients,
 	getAllMenu,
+	getLocationIngredients,
 	getLocationMenu,
 } from "../services/menu.js";
 
@@ -95,10 +99,81 @@ export const getLocationMenuController = async (
 ) => {
 	try {
 		const { locationId } = req.params;
+		if (!locationId) {
+			throw new Error("Location Id is required!");
+		}
 		const locationMenus = await getLocationMenu(locationId);
 		res.json({
 			no_of_menu: locationMenus.length,
 			data: locationMenus,
+		});
+	} catch (err) {
+		next(err);
+	}
+};
+
+export const addIngredientController = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const newIngredient = await addIngredient(req.body);
+		res.json({
+			message: "New Ingredient added successfully",
+			data: newIngredient,
+		});
+	} catch (err) {
+		next(err);
+	}
+};
+
+export const addLocationIngredientController = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const locationIngredient = await addLocationIngredient(req.body);
+		res.json({
+			message: `New Ingredient added for the ${locationIngredient.location_menu.menu.name} menu in the ${locationIngredient.location_menu.location.name} location !`,
+			data: locationIngredient,
+		});
+	} catch (err: any) {
+		next(err);
+	}
+};
+
+export const getAllIngredientsController = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const allIngredients = await getAllIngredients();
+		res.json({
+			no_of_ingredients: allIngredients.length,
+			data: allIngredients,
+		});
+	} catch (err: any) {
+		next(err);
+	}
+};
+
+export const getLocationIngredientsController = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const { locationMenuId } = req.params;
+		if (!locationMenuId) {
+			throw new Error("LocationMenuId is required!");
+		}
+		const ingredients = await getLocationIngredients(locationMenuId);
+		res.json({
+			no_of_ingredients: ingredients.length,
+			data: ingredients,
 		});
 	} catch (err) {
 		next(err);
