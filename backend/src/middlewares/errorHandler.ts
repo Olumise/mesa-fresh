@@ -52,6 +52,7 @@ export const ErrorHandler = (
 	return res.status(500).json({
 		message: err.message,
 		url: req.url,
-		...(process.env.MODE === "development" && { stack: err.stack }),
+		cause:err.cause,
+		...(process.env.MODE === "development" && { stack: err.stack })
 	});
 };
