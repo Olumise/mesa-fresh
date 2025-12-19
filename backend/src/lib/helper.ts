@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 export function capitalizeString(value: string) {
 	if (!value || typeof value !== "string") {
 		return null;
@@ -8,4 +10,8 @@ export function capitalizeString(value: string) {
 		.map((i) => i.charAt(0).toUpperCase() + i.slice(1))
 		.join(" ");
 	return capitalizedString;
+}
+
+export function generateRandomUUID() {
+	return uuidv4();
 }

@@ -1,3 +1,4 @@
+import { APIError } from "better-auth/api";
 import {
 	Location,
 	Menu,
@@ -6,6 +7,8 @@ import {
 	MenuCategory,
 	LocationIngredient,
 	User,
+	Staff,
+	StaffInvitation,
 } from "../../generated/prisma/client.js";
 import { LocationSchemaCreate } from "../schemas/location.js";
 import {
@@ -16,12 +19,18 @@ import {
 	MenuAndCategorySchemaCreate,
 	MenuSchemaCreate,
 } from "../schemas/menu.js";
+import {
+	CreateStaffInvitationSchema,
+	CreateStaffSchema,
+} from "../schemas/staff.js";
 import { CreateUserSchema } from "../schemas/user.js";
 import { UserAuthInput } from "../services/auth.js";
 import { MenuWithCategory, UpdatedMenu } from "../services/menu.js";
+import { StaffExtendedInput } from "../services/staff.js";
 
 import { capitalizeString } from "./helper.js";
 import prisma from "./prisma.js";
+import { object } from "zod";
 
 export function validateLocationInput(data: Location) {
 	if (!data) {
@@ -86,10 +95,67 @@ export async function validateSignUpData(data: UserAuthInput) {
 	return CreateUserSchema.parse(data);
 }
 
-export function validateSignInData(data:any){
-	const {email,password}= data
-	if(!email || !password){
-		throw new Error("Email and Password is required!")
+export function validateSignInData(data: any) {
+	const { email, password } = data;
+	if (!email || !password) {
+		throw new Error("Email and Password is required!");
 	}
-	
+}
+
+export function validateNewStaffData(data: StaffExtendedInput) {
+	const {
+		location_id,
+		user_id,
+		date_joined,
+		is_active,
+		role_id,
+		invitation_code,
+	} = data;
+	if (!data) {
+		throw new Error("No data in your request!");
+	}
+	return CreateStaffSchema.parse(data);
+}
+
+export function validateStaffInvitationCreation(data: StaffInvitation) {
+	if (!data) {
+		throw new Error("No data in your request!");
+	}
+	return CreateStaffInvitationSchema.parse(data);
+}
+
+export async function validateBetterAuthSignUp(ctx: any) {
+	if (!ctx.body) {
+		throw new APIError("BAD_REQUEST", {
+			message: "No data in your request!",
+		});
+	}
+	const { name, email, password, roleId, phone } = ctx.body;
+	if (!roleId) {
+		throw new APIError("BAD_REQUEST", {
+			message: "RoleId is required",
+		});
+	}
+	if (!name) {
+		throw new APIError("BAD_REQUEST", {
+			message: "Name is required!",
+		});
+	}
+
+	if (!email || !password) {
+		throw new APIError("BAD_REQUEST", {
+			message: "Email and Password is required!",
+		});
+	}
+
+	const role = await prisma.dBRole.findUnique({
+		where: {
+			id: roleId,
+		},
+	});
+	if (!role) {
+		throw new APIError("BAD_REQUEST", {
+			message: "Role is not valid",
+		});
+	}
 }

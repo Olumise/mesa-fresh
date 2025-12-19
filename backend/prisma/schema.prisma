@@ -14,19 +14,20 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String            @id @default(uuid())
   name          String
   email         String
   image         String?
   phone         String
-  emailVerified Boolean   @default(false) @map("email_verified")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  emailVerified Boolean           @default(false) @map("email_verified")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
   roleId        String
-  role          DBRole    @relation(fields: [roleId], references: [id])
+  role          DBRole            @relation(fields: [roleId], references: [id])
   sessions      Session[]
   accounts      Account[]
   staffs        Staff[]
+  invitations   StaffInvitation[]
 
   @@unique([email])
   @@map("users")
@@ -44,20 +45,39 @@ model DBRole {
   @@map("db_roles")
 }
 
+model StaffInvitation {
+  id              String    @id @default(uuid())
+  invited_by      String
+  inviter         User      @relation(fields: [invited_by], references: [id])
+  invited_email   String    @unique
+  invitation_code String    @unique
+  is_accepted     Boolean   @default(false)
+  accepted_at     DateTime?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  staff           Staff?
+  location_id     String
+  location        Location  @relation(fields: [location_id], references: [id])
+
+  @@map("staff_invitation")
+}
+
 model Staff {
-  id          String    @id @default(uuid())
-  user_id     String
-  user        User      @relation(fields: [user_id], references: [id])
-  location_id String
-  location    Location  @relation(fields: [location_id], references: [id])
-  date_joined DateTime
-  date_left   DateTime?
-  is_active   Boolean
-  role_id     String
-  role        StaffRole @relation(fields: [role_id], references: [id])
-  managers    Manager[]
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id            String          @id @default(uuid())
+  user_id       String
+  user          User            @relation(fields: [user_id], references: [id])
+  location_id   String
+  location      Location        @relation(fields: [location_id], references: [id])
+  date_joined   DateTime
+  date_left     DateTime?
+  is_active     Boolean
+  role_id       String
+  role          StaffRole       @relation(fields: [role_id], references: [id])
+  invitation_id String          @unique
+  invitation    StaffInvitation @relation(fields: [invitation_id], references: [id])
+  managers      Manager[]
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
 
   @@unique([user_id, location_id])
   @@map("staffs")
@@ -76,7 +96,7 @@ model StaffRole {
 }
 
 model Location {
-  id               String         @id @default(uuid())
+  id               String            @id @default(uuid())
   name             String
   address          String
   staffs           Staff[]
@@ -86,8 +106,9 @@ model Location {
   is_active        Boolean
   managers         Manager[]
   location_menus   LocationMenu[]
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  staffInvitations StaffInvitation[]
 
   @@unique(name)
   @@map("locations")

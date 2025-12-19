@@ -3,6 +3,7 @@ import { validateSignInData, validateSignUpData } from "../lib/validate.js";
 import { auth } from "../lib/auth.js";
 import { AppError } from "../middlewares/errorHandler.js";
 import { fromNodeHeaders } from "better-auth/node";
+import prisma from "../lib/prisma.js";
 
 export interface UserAuthInput extends User {
 	password: string;
@@ -43,5 +44,3 @@ export const signInUser = async (data: any, headers: any) => {
 		throw new Error(err);
 	}
 };
-
-

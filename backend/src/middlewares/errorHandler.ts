@@ -28,6 +28,7 @@ export const ErrorHandler = (
 			title: err.title,
 			message: err.message,
 			metaData: err.metaData,
+			url: req.url,
 			...(process.env.MODE === "development" && { issues: err.stack })
 		});
 	}
