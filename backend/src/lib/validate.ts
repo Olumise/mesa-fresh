@@ -22,6 +22,7 @@ import {
 import {
 	CreateStaffInvitationSchema,
 	CreateStaffSchema,
+	fullStaffSignupSchema,
 } from "../schemas/staff.js";
 import { CreateUserSchema } from "../schemas/user.js";
 import { UserAuthInput } from "../services/auth.js";
@@ -158,4 +159,11 @@ export async function validateBetterAuthSignUp(ctx: any) {
 			message: "Role is not valid",
 		});
 	}
+}
+
+export function validatefullStaffSignupInput(data:any){
+	if (!data) {
+		throw new Error("No data in your request!");
+	}
+	return fullStaffSignupSchema.parse(data)
 }

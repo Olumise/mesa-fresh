@@ -15,6 +15,7 @@ export const signUpUser = async (data: UserAuthInput) => {
 
 	try {
 		const data = await auth.api.signUpEmail({
+			returnHeaders: true,
 			body: {
 				name,
 				email,
@@ -29,17 +30,19 @@ export const signUpUser = async (data: UserAuthInput) => {
 	}
 };
 
-export const signInUser = async (data: any, headers: any) => {
+export const signInUser = async (data: any) => {
 	validateSignInData(data);
 	const { email, password } = data;
 	try {
 		const data = await auth.api.signInEmail({
+			returnHeaders: true,
 			body: {
 				email,
 				password,
 			},
-			headers: headers,
+			
 		});
+		return data
 	} catch (err: any) {
 		throw new Error(err);
 	}

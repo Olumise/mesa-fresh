@@ -13,11 +13,11 @@ import profileRouter from "./routes/profile.js";
 import staffRouter from "./routes/staff.js";
 
 
-app.all("/api/auth/*splat", toNodeHandler(auth));
+// app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
 
-// app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/location", locationRouter);
 app.use("/api/menu", menuRouter);
 app.use("/api/admin", adminRouter);

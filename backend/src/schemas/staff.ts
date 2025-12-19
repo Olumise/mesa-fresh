@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { CreateUserSchema } from "./user.js";
 
 export const staffSchema = z.object({
 	user_id: z
@@ -21,8 +22,7 @@ export const staffSchema = z.object({
 });
 
 export const StaffInvitationSchema = z.object({
-	invited_by: z
-		.string("Invited by should be a string"),
+	invited_by: z.string("Invited by should be a string"),
 
 	invited_email: z
 		.string("Invited email should be a string")
@@ -32,8 +32,7 @@ export const StaffInvitationSchema = z.object({
 		.string("Invitation code should be a string")
 		.min(1, "Invitation code is required"),
 
-		location_id: z
-		.string("Location Id should be a string"),
+	location_id: z.string("Location Id should be a string"),
 
 	is_accepted: z.boolean("Is accepted should be a boolean").optional(),
 
@@ -50,4 +49,10 @@ export const AcceptStaffInvitationSchema = z.object({
 	invitation_code: z
 		.string("Invitation code should be a string")
 		.min(1, "Invitation code is required"),
+});
+
+export const fullStaffSignupSchema = CreateStaffSchema.merge(
+	CreateUserSchema
+).omit({
+	user_id: true,
 });

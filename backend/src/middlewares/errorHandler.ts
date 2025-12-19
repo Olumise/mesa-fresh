@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../generated/prisma/client.js";
 import { prismaError } from "prisma-better-errors";
 import z from "zod";
+import { APIError } from "better-auth/api";
 
 export class AppError extends Error {
 	statusCode: number;
@@ -45,6 +46,15 @@ export const ErrorHandler = (
 			message: err.message,
 			url: req.url,
 			type: "AppError",
+			...(process.env.MODE === "development" && { stack: err.stack }),
+		});
+	}
+
+	if (err instanceof APIError){
+		return res.status(err.statusCode).json({
+			message: err.message,
+			url: req.url,
+			type: "Better Auth Error",
 			...(process.env.MODE === "development" && { stack: err.stack }),
 		});
 	}

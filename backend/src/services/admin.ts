@@ -1,7 +1,7 @@
 import { prismaError } from "prisma-better-errors";
 import prisma from "../lib/prisma.js";
 import { generateRandomUUID } from "../lib/helper.js";
-import { StaffInvitation } from ".../../generated/prisma/client.js";
+import { Prisma, StaffInvitation } from "../../generated/prisma/client.js";
 import { validateStaffInvitationCreation } from "../lib/validate.js";
 
 export const addDBRole = async () => {
@@ -32,23 +32,22 @@ export const getDBRoles = async () => {
 
 export const inviteUser = async (data: any) => {
 	validateStaffInvitationCreation(data);
-	const { invited_by, invited_email, invitation_code,location_id } = data;
+	const { invited_by, invited_email, invitation_code, location_id } = data;
 	try {
-
 		const inviter = await prisma.user.findUnique({
-			where:{
-				id:invited_by
-			}
-		})
-		if(!inviter){
-			throw new Error('The Inviter does not exist!')
+			where: {
+				id: invited_by,
+			},
+		});
+		if (!inviter) {
+			throw new Error("The Inviter does not exist!");
 		}
 		const newInvitation = await prisma.staffInvitation.create({
 			data: {
 				invited_email,
 				invited_by,
 				invitation_code,
-				location_id
+				location_id,
 			},
 			include: {
 				inviter: true,
@@ -56,6 +55,9 @@ export const inviteUser = async (data: any) => {
 		});
 		return newInvitation;
 	} catch (err: any) {
+		if (err instanceof Prisma.PrismaClientKnownRequestError) {
+			throw new prismaError(err);
+		}
 		throw new Error(err);
 	}
 };
