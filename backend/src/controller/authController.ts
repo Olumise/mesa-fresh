@@ -40,7 +40,7 @@ export const signInController = async (
 		}
 
 		res.status(201).json({
-			message: "New User created successfully!",
+			message: "Signed In sucessfully!!",
 			data: response,
 		});
 	} catch (err) {

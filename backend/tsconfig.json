@@ -8,6 +8,7 @@
     "paths": {
       "@/*": ["./*"]
     },
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     
 
     // Environment Settings

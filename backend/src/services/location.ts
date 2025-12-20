@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma.js";
-import { Location } from "../../generated/prisma/client.js";
+import { Location, Prisma } from "../../generated/prisma/client.js";
 import { validateLocationInput } from "../lib/validate.js";
 import { prismaError } from "prisma-better-errors";
 import { AppError } from "../middlewares/errorHandler.js";
@@ -36,13 +36,13 @@ export const getAllLocation = async () => {
 	}
 };
 
-export const getUniqueLocation = async (id?: string) => {
+export const getUniqueLocation = async (locationId?: string) => {
 	try {
-		if (!id) {
+		if (!locationId) {
 			throw new Error("Id is required!");
 		}
 		const location = await prisma.location.findUnique({
-			where: { id },
+			where: { id:locationId },
 			select: {
 				id: true,
 				name: true,
@@ -53,8 +53,14 @@ export const getUniqueLocation = async (id?: string) => {
 				is_active: true,
 			},
 		});
+		if(!location){
+			throw new Error('Location does not exist!')
+		}
 		return location;
 	} catch (err: any) {
-		throw new prismaError(err);
+		if (err instanceof Prisma.PrismaClientKnownRequestError) {
+					throw new prismaError(err);
+				}
+				throw new Error(err);
 	}
 };

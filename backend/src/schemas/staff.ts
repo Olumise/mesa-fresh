@@ -39,6 +39,15 @@ export const StaffInvitationSchema = z.object({
 	accepted_at: z.coerce.date("Accepted at should be a valid date").optional(),
 });
 
+export const ManagerSchema = z.object({
+	staff_id: z
+		.string("Staff ID should be a string")
+		.uuid("Staff ID should be a valid UUID"),
+
+	location_id: z
+		.string("Location ID should be a string")
+		.uuid("Location ID should be a valid UUID"),
+});
 export const CreateStaffSchema = staffSchema;
 export const UpdtaeStaffSchema = CreateStaffSchema.partial();
 export const CreateStaffInvitationSchema = StaffInvitationSchema.omit({
@@ -56,3 +65,4 @@ export const fullStaffSignupSchema = CreateStaffSchema.merge(
 ).omit({
 	user_id: true,
 });
+export const CreateManagerSchema = ManagerSchema;

@@ -64,7 +64,7 @@ model StaffInvitation {
 
 model Staff {
   id            String          @id @default(uuid())
-  user_id       String
+  user_id       String          @unique
   user          User            @relation(fields: [user_id], references: [id])
   location_id   String
   location      Location        @relation(fields: [location_id], references: [id])

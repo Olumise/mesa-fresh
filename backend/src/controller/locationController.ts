@@ -45,8 +45,8 @@ export const getUniqueLocationController = async (
 	next: NextFunction
 ) => {
 	try {
-		const { id } = req.params;
-		const location = await getUniqueLocation(id);
+		const { locationId } = req.params;
+		const location = await getUniqueLocation(locationId);
 		res.send(location);
 	} catch (err) {
 		next(err);

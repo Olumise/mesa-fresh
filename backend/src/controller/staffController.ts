@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addStaff, addStaffRoles } from "../services/staff.js";
+import { addManager, addStaff, addStaffRoles } from "../services/staff.js";
 
 export const addStaffRolesController = async (
 	req: Request,
@@ -30,3 +30,18 @@ export const addStaffController = async (
 	}
 };
 
+export const addManagerController = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const manager = await addManager(req.body);
+		res.json({
+			message: "Manager created successfully!",
+			data: manager,
+		});
+	} catch (err) {
+		next(err);
+	}
+};

@@ -1,11 +1,30 @@
 import express from "express";
-import { createDBRolesController, getDBRolesController, inviteUserController } from "../controller/adminController.js";
+import {
+	createDBRolesController,
+	getDBRolesController,
+	inviteUserController,
+} from "../controller/adminController.js";
+import { authVerify } from "../middlewares/authVerify.js";
+import { dbRoleVerify } from "../middlewares/dbRoleVerify.js";
 const adminRouter = express();
 
-adminRouter.post("/create-db-roles", createDBRolesController);
-adminRouter.get("/get-db-roles", getDBRolesController);
-adminRouter.post("/invite-user", inviteUserController)
+adminRouter.post(
+	"/create-db-roles",
+	authVerify,
+	dbRoleVerify("Admin"),
+	createDBRolesController
+);
+adminRouter.get(
+	"/get-db-roles",
+	authVerify,
+	dbRoleVerify("Admin"),
+	getDBRolesController
+);
+adminRouter.post(
+	"/invite-user",
+	authVerify,
+	dbRoleVerify("Admin"),
+	inviteUserController
+);
 
-
-
-export default adminRouter
+export default adminRouter;

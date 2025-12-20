@@ -9,6 +9,7 @@ import {
 	User,
 	Staff,
 	StaffInvitation,
+	Manager,
 } from "../../generated/prisma/client.js";
 import { LocationSchemaCreate } from "../schemas/location.js";
 import {
@@ -20,6 +21,7 @@ import {
 	MenuSchemaCreate,
 } from "../schemas/menu.js";
 import {
+	CreateManagerSchema,
 	CreateStaffInvitationSchema,
 	CreateStaffSchema,
 	fullStaffSignupSchema,
@@ -161,9 +163,16 @@ export async function validateBetterAuthSignUp(ctx: any) {
 	}
 }
 
-export function validatefullStaffSignupInput(data:any){
+export function validatefullStaffSignupInput(data: any) {
 	if (!data) {
 		throw new Error("No data in your request!");
 	}
-	return fullStaffSignupSchema.parse(data)
+	return fullStaffSignupSchema.parse(data);
+}
+
+export function validateManagerInput(data: Manager) {
+	if (!data) {
+		throw new Error("No data in your request!");
+	}
+	return CreateManagerSchema.parse(data);
 }
