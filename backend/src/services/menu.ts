@@ -16,19 +16,18 @@ import {
 	validateLocationMenuIngredient,
 } from "../lib/validate.js";
 import { prismaError } from "prisma-better-errors";
+import { AppError } from "../middlewares/errorHandler.js";
 
-export interface MenuWithAddons extends Menu {
-	addons?: { addon_id: string }[];
-}
-export interface MenuWithCategory extends Omit<MenuWithAddons, "category_id"> {
-	category_name: string;
-	category_description?: string;
-}
-export interface UpdatedMenu extends Omit<MenuWithAddons, "category_id"> {
+export interface UpdatedMenu extends Omit<Menu, "category_id"> {
 	category_name?: string;
 	category_description?: string;
 	category_id?: string;
 	addons?: { addon_id: string }[];
+	ingredients: {
+		ingredient_id: string;
+		ingredient_per_unit: number;
+		unit: string;
+	}[];
 }
 
 export const addMenuCategory = async (data: MenuCategory) => {
@@ -60,6 +59,7 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 			addons,
 			category_name,
 			category_description,
+			ingredients,
 		} = data;
 		let queryData: any = {
 			name,
@@ -70,6 +70,9 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 			calories,
 			prep_time,
 			is_customizable,
+			menu_ingredients: {
+				create: ingredients,
+			},
 		};
 		if (!category_id && !category_name) {
 			throw new Error("Category Id or Category Name is required!");
@@ -164,7 +167,7 @@ export const getLocationMenu = async (locationId: string) => {
 	}
 };
 
-export const addIngredient = async (data: Ingredient) => {
+export const addIngredient = async (data: Ingredient | Ingredient) => {
 	const { name, description } = data;
 	if (!name) {
 		throw new Error("Ingredient Name is required!");
@@ -184,6 +187,22 @@ export const addLocationIngredient = async (data: LocationIngredient) => {
 	validateLocationMenuIngredient(data);
 
 	try {
+		const locationMenu = await prisma.locationMenu.findUnique({
+			where: {
+				id: location_menu_id,
+			},
+		});
+		if (!locationMenu) {
+			throw new AppError(404, "Location Menu not found!");
+		}
+		const ingredient = await prisma.ingredient.findUnique({
+			where: {
+				id: ingredient_id,
+			},
+		});
+		if (!ingredient) {
+			throw new AppError(404, "Ingredient not found!");
+		}
 		const locationIngredient = await prisma.locationIngredient.create({
 			data,
 			include: {

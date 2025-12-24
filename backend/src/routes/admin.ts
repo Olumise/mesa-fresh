@@ -9,18 +9,6 @@ import { dbRoleVerify } from "../middlewares/dbRoleVerify.js";
 const adminRouter = express();
 
 adminRouter.post(
-	"/create-db-roles",
-	authVerify,
-	dbRoleVerify("Admin"),
-	createDBRolesController
-);
-adminRouter.get(
-	"/get-db-roles",
-	authVerify,
-	dbRoleVerify("Admin"),
-	getDBRolesController
-);
-adminRouter.post(
 	"/invite-user",
 	authVerify,
 	dbRoleVerify("Admin"),

@@ -128,20 +128,21 @@ model Manager {
 }
 
 model Menu {
-  id              String         @id @default(uuid())
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
-  name            String         @unique
+  id              String           @id @default(uuid())
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  name            String           @unique
   price           Decimal
   description     String
   image           String
   category_id     String
-  category        MenuCategory   @relation(fields: [category_id], references: [id])
+  category        MenuCategory     @relation(fields: [category_id], references: [id])
   calories        Int
   prep_time       String
   is_customizable Boolean
   location_menus  LocationMenu[]
   menu_addons     MenuAddon[]
+  menu_ingredients MenuIngredient[]
 
   @@map("menus")
 }
@@ -205,8 +206,21 @@ model Ingredient {
   name                 String               @unique
   description          String?
   location_ingredients LocationIngredient[]
+  menu_ingredients      MenuIngredient[]
 
   @@map("ingredients")
+}
+
+model MenuIngredient {
+  menu_id             String
+  menu                Menu           @relation(fields: [menu_id], references: [id])
+  ingredient_id       String
+  ingredient          Ingredient     @relation(fields: [ingredient_id], references: [id])
+  ingredient_per_unit Int
+  unit                IngredientUnit
+
+  @@unique([menu_id, ingredient_id])
+  @@map("menu_ingredient")
 }
 
 model LocationIngredient {
@@ -219,7 +233,7 @@ model LocationIngredient {
   quantity         Int
   unit             IngredientUnit
 
-  @@id([location_menu_id])
+  @@id([location_menu_id,ingredient_id])
   @@map("location_ingredients")
 }
 

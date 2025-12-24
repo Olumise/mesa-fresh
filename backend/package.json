@@ -1,37 +1,42 @@
 {
-  "name": "mesa-fresh-backend",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "start": "nodemon dist/src/index.js",
-    "dev": "nodemon --watch src --ext ts --exec \"npm run build && npm start\" "
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.956.0",
-    "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^7.1.0",
-    "@types/express": "^5.0.6",
-    "better-auth": "^1.4.6",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "multer": "^2.0.2",
-    "nodemon": "^3.1.11",
-    "pg": "^8.16.3",
-    "prisma-better-errors": "^1.0.4",
-    "typescript": "^5.9.3",
-    "uuid": "^13.0.0",
-    "zod": "^4.1.13"
-  },
-  "devDependencies": {
-    "@types/multer": "^2.0.0",
-    "@types/node": "^25.0.1",
-    "@types/pg": "^8.16.0",
-    "prisma": "^7.1.0"
-  }
+	"name": "mesa-fresh-backend",
+	"version": "1.0.0",
+	"description": "",
+	"license": "ISC",
+	"author": "",
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc",
+		"start": "nodemon dist/src/index.js",
+		"dev": "nodemon --watch src --ext ts --exec \"npm run build && npm start\" "
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.956.0",
+		"@prisma/adapter-pg": "^7.1.0",
+		"@prisma/client": "^7.1.0",
+		"@types/express": "^5.0.6",
+		"better-auth": "^1.4.6",
+		"dotenv": "^17.2.3",
+		"express": "^5.2.1",
+		"multer": "^2.0.2",
+		"nodemon": "^3.1.11",
+		"pg": "^8.16.3",
+		"prisma-better-errors": "^1.0.4",
+		"typescript": "^5.9.3",
+		"uuid": "^13.0.0",
+		"zod": "^4.1.13"
+	},
+	"devDependencies": {
+		"@types/multer": "^2.0.0",
+		"@types/node": "^25.0.1",
+		"@types/pg": "^8.16.0",
+		"prisma": "^7.1.0",
+		"ts-node": "^10.9.2",
+		"tsx": "^4.21.0"
+	},
+	"prisma": {
+		"seed": "tsx prisma/seed.ts"
+	}
 }

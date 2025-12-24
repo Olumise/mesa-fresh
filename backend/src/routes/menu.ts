@@ -41,7 +41,13 @@ menuRouter.get(
 	dbRoleVerify("Admin"),
 	getAllMenuController
 );
-menuRouter.post("/add-location-menu", authVerify, addLocationMenuController);
+menuRouter.post(
+	"/:locationId/add-location-menu",
+	authVerify,
+	locationVerify,
+	staffRoleVerify("Manager"),
+	addLocationMenuController
+);
 menuRouter.get(
 	"/location-menu/:locationId",
 	authVerify,
@@ -54,15 +60,17 @@ menuRouter.post(
 	dbRoleVerify("Admin"),
 	addIngredientController
 );
-menuRouter.get("/all-ingredients", getAllIngredientsController);
+menuRouter.get("/all-ingredients", authVerify, getAllIngredientsController);
 menuRouter.post(
-	"/add-location-ingredient",
+	"/:locationId/add-location-ingredient",
 	authVerify,
+	locationVerify,
 	staffRoleVerify("Manager"),
 	addLocationIngredientController
 );
 menuRouter.get(
 	"/location-ingredient/:locationMenuId",
+	authVerify,
 	getLocationIngredientsController
 );
 

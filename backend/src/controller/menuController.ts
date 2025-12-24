@@ -11,6 +11,8 @@ import {
 	getLocationIngredients,
 	getLocationMenu,
 } from "../services/menu.js";
+import prisma from "../lib/prisma.js";
+import { AppError } from "../middlewares/errorHandler.js";
 
 export const addMenuCategoryController = async (
 	req: Request,
@@ -81,8 +83,19 @@ export const addLocationMenuController = async (
 	res: Response,
 	next: NextFunction
 ) => {
+	const { locationId } = req.params;
+	if (!locationId) {
+		throw new Error("No Location id found!");
+	}
+	const { menu_id, is_available, quantity } = req.body;
+	const data: any = {
+		menu_id,
+		is_available,
+		quantity,
+		location_id: locationId,
+	};
 	try {
-		const newLocationMenu = await addLocationMenu(req.body);
+		const newLocationMenu = await addLocationMenu(data);
 		res.json({
 			message: `New Menu has been added to the ${newLocationMenu.location.name} location!`,
 			data: newLocationMenu,
@@ -133,7 +146,30 @@ export const addLocationIngredientController = async (
 	res: Response,
 	next: NextFunction
 ) => {
+	const { location_menu_id } = req.body;
+	const userInfo = req.user?.user;
+	if (!userInfo?.id) {
+		throw new AppError(401, "Unauthorized User!");
+	}
+
 	try {
+		const locMenu = await prisma.locationMenu.findUnique({
+			where: {
+				id: location_menu_id,
+			},
+		});
+		if (!locMenu) {
+			throw new AppError(404, "Location Menu not found!");
+		}
+		const staff = await prisma.staff.findFirst({
+			where: {
+				user_id: userInfo?.id,
+				location_id: locMenu.location_id,
+			},
+		});
+		if (!staff) {
+			throw new AppError(403, "User not assigned to this Location");
+		}
 		const locationIngredient = await addLocationIngredient(req.body);
 		res.json({
 			message: `New Ingredient added for the ${locationIngredient.location_menu.menu.name} menu in the ${locationIngredient.location_menu.location.name} location !`,
