@@ -1,7 +1,7 @@
 import express from "express";
 import {
 	addAddonController,
-	addIngredientController,
+	addIngredientsController,
 	addLocationIngredientController,
 	addLocationMenuController,
 	addMenuCategoryController,
@@ -10,6 +10,7 @@ import {
 	getAllMenuController,
 	getLocationIngredientsController,
 	getLocationMenuController,
+	getMenuReceipeController,
 } from "../controller/menuController.js";
 import { dbRoleVerify } from "../middlewares/dbRoleVerify.js";
 import { authVerify } from "../middlewares/authVerify.js";
@@ -55,10 +56,10 @@ menuRouter.get(
 	getLocationMenuController
 );
 menuRouter.post(
-	"/add-ingredient",
+	"/add-ingredients",
 	authVerify,
 	dbRoleVerify("Admin"),
-	addIngredientController
+	addIngredientsController
 );
 menuRouter.get("/all-ingredients", authVerify, getAllIngredientsController);
 menuRouter.post(
@@ -69,9 +70,11 @@ menuRouter.post(
 	addLocationIngredientController
 );
 menuRouter.get(
-	"/location-ingredient/:locationMenuId",
+	"/location-ingredient/:locationId",
 	authVerify,
+	locationVerify,
 	getLocationIngredientsController
 );
+menuRouter.get("/receipe/:menuId", authVerify, getMenuReceipeController);
 
 export default menuRouter;

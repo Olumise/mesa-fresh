@@ -96,19 +96,20 @@ model StaffRole {
 }
 
 model Location {
-  id               String            @id @default(uuid())
-  name             String
-  address          String
-  staffs           Staff[]
-  square_ft        String
-  sitting_capacity Int
-  open_date        DateTime
-  is_active        Boolean
-  managers         Manager[]
-  location_menus   LocationMenu[]
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
-  staffInvitations StaffInvitation[]
+  id                  String               @id @default(uuid())
+  name                String
+  address             String
+  staffs              Staff[]
+  square_ft           String
+  sitting_capacity    Int
+  open_date           DateTime
+  is_active           Boolean
+  managers            Manager[]
+  location_menus      LocationMenu[]
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  staffInvitations    StaffInvitation[]
+  locationIngredients LocationIngredient[]
 
   @@unique(name)
   @@map("locations")
@@ -128,33 +129,34 @@ model Manager {
 }
 
 model Menu {
-  id              String           @id @default(uuid())
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  name            String           @unique
-  price           Decimal
-  description     String
-  image           String
-  category_id     String
-  category        MenuCategory     @relation(fields: [category_id], references: [id])
-  calories        Int
-  prep_time       String
-  is_customizable Boolean
-  location_menus  LocationMenu[]
-  menu_addons     MenuAddon[]
+  id               String           @id @default(uuid())
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  name             String           @unique
+  price            Decimal @db.Decimal(10, 2)
+  description      String
+  image            String
+  category_id      String
+  category         MenuCategory     @relation(fields: [category_id], references: [id])
+  calories         Int
+  prep_time        String
+  is_customizable  Boolean
+  location_menus   LocationMenu[]
+  menu_addons      MenuAddon[]
   menu_ingredients MenuIngredient[]
 
   @@map("menus")
 }
 
 model Addon {
-  id          String      @id @default(uuid())
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  name        String      @unique
-  price       Decimal     @default(0.0)
-  is_free     Boolean
-  menu_addons MenuAddon[]
+  id                String            @id @default(uuid())
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  name              String            @unique
+  price             Decimal           @default(0.0)
+  is_free           Boolean
+  menu_addons       MenuAddon[]
+  addon_ingredients AddonIngredient[]
 
   @@map("addons")
 }
@@ -182,8 +184,6 @@ model LocationMenu {
   is_available Boolean
   quantity     Int
 
-  location_ingredients LocationIngredient[]
-
   @@unique([location_id, menu_id])
   @@map("location_menus")
 }
@@ -200,40 +200,55 @@ model MenuCategory {
 }
 
 model Ingredient {
-  id                   String               @id @default(uuid())
-  createdAt            DateTime             @default(now()) @map("created_at")
-  updatedAt            DateTime             @updatedAt @map("updated_at")
-  name                 String               @unique
-  description          String?
-  location_ingredients LocationIngredient[]
-  menu_ingredients      MenuIngredient[]
+  id                             String                 @id @default(uuid())
+  createdAt                      DateTime               @default(now()) @map("created_at")
+  updatedAt                      DateTime               @updatedAt @map("updated_at")
+  name                           String                 @unique
+  description                    String?
+  tracking_type                  IngredientTrackingType @default(PRECISE)
+  estimated_usage_per_100_orders Int?
+  location_ingredients           LocationIngredient[]
+  menu_ingredients               MenuIngredient[]
+  addon_ingredients               AddonIngredient[]
 
   @@map("ingredients")
 }
 
 model MenuIngredient {
-  menu_id             String
-  menu                Menu           @relation(fields: [menu_id], references: [id])
-  ingredient_id       String
-  ingredient          Ingredient     @relation(fields: [ingredient_id], references: [id])
-  ingredient_per_unit Int
-  unit                IngredientUnit
+  menu_id       String
+  menu          Menu           @relation(fields: [menu_id], references: [id])
+  ingredient_id String
+  ingredient    Ingredient     @relation(fields: [ingredient_id], references: [id])
+  quantity      Int
+  unit          IngredientUnit
 
-  @@unique([menu_id, ingredient_id])
+  @@id([menu_id, ingredient_id])
   @@map("menu_ingredient")
 }
 
-model LocationIngredient {
-  location_menu_id String
-  location_menu    LocationMenu   @relation(fields: [location_menu_id], references: [id])
-  ingredient_id    String
-  ingredient       Ingredient     @relation(fields: [ingredient_id], references: [id])
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
-  quantity         Int
-  unit             IngredientUnit
+model AddonIngredient {
+  addon_id      String
+  addon         Addon          @relation(fields: [addon_id], references: [id])
+  ingredient_id String
+  ingredient    Ingredient     @relation(fields: [ingredient_id], references: [id])
+  quantity      Int
+  unit          IngredientUnit
 
-  @@id([location_menu_id,ingredient_id])
+  @@id([addon_id, ingredient_id])
+  @@map("addon_ingredients")
+}
+
+model LocationIngredient {
+  location_id   String
+  location      Location       @relation(fields: [location_id], references: [id])
+  ingredient_id String
+  ingredient    Ingredient     @relation(fields: [ingredient_id], references: [id])
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  quantity      Int
+  unit          IngredientUnit
+
+  @@id([location_id, ingredient_id])
   @@map("location_ingredients")
 }
 
@@ -294,4 +309,9 @@ enum IngredientUnit {
   SLICE      @map("slice")
   CLOVE      @map("clove")
   LEAF       @map("leaf")
+}
+
+enum IngredientTrackingType {
+  PRECISE
+  ESTIMATED
 }

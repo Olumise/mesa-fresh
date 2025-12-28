@@ -1,4 +1,19 @@
 import { z } from "zod";
+export const IngredientUnitSchema = z.enum([
+	"GRAM",
+	"KILOGRAM",
+	"MILLILITER",
+	"LITER",
+	"PIECE",
+	"SLICE",
+	"CLOVE",
+	"LEAF",
+]);
+const ingredientMenuSchema = z.object({
+	ingredient_id: z.string("Ingredient Id should be a string!"),
+	quantity: z.number("Ingredient per unit should be a number!"),
+	unit: IngredientUnitSchema,
+});
 
 export const MenuSchema = z
 	.object({
@@ -35,10 +50,11 @@ export const MenuSchema = z
 		category_name: z.string("Category Name should be a string").optional(),
 
 		category_description: z.string("Category ID should be a string").optional(),
+
+		ingredients: z.array(ingredientMenuSchema),
 	})
 	.refine(
 		(data) => {
-			console.log("REFINE DATA:", data);
 			return !!data.category_id || !!data.category_name;
 		},
 		{
@@ -62,6 +78,7 @@ export const AddonSchema = z
 			.nonnegative("Price cannot be negative"),
 
 		is_free: z.boolean("Is free should be a boolean"),
+		ingredients: z.array(ingredientMenuSchema),
 	})
 	.refine((data) => !(data.is_free && data.price > 0), {
 		message: "Free addons cannot have a price",
@@ -84,23 +101,10 @@ export const LocationMenuSchema = z.object({
 		.nonnegative("Quantity cannot be negative"),
 });
 
-export const IngredientUnitSchema = z.enum([
-	"GRAM",
-	"KILOGRAM",
-	"MILLILITER",
-	"LITER",
-	"PIECE",
-	"SLICE",
-	"CLOVE",
-	"LEAF",
-]);
-
-
-
 export const LocationIngredientSchema = z.object({
-	location_menu_id: z
-		.string("Location Menu ID should be a string")
-		.uuid("Location Menu ID should be a valid UUID"),
+	location_id: z
+		.string("Location ID should be a string")
+		.uuid("Location ID should be a valid UUID"),
 
 	ingredient_id: z
 		.string("Ingredient ID should be a string")

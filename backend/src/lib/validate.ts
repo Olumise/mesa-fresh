@@ -28,7 +28,7 @@ import {
 } from "../schemas/staff.js";
 import { CreateUserSchema } from "../schemas/user.js";
 import { UserAuthInput } from "../services/auth.js";
-import { MenuWithCategory, UpdatedMenu } from "../services/menu.js";
+import { UpdatedMenu } from "../services/menu.js";
 import { StaffExtendedInput } from "../services/staff.js";
 
 import { capitalizeString } from "./helper.js";
@@ -47,13 +47,6 @@ export function validateMenuInput(data: UpdatedMenu) {
 		throw new Error("No data in your request!");
 	}
 	return MenuSchemaCreate.parse(data);
-}
-
-export function validateMenuWithCategoryInput(data: MenuWithCategory) {
-	if (!data) {
-		throw new Error("No data in your request!");
-	}
-	return MenuAndCategorySchemaCreate.parse(data);
 }
 
 export function validateLocationMenuInputs(data: LocationMenu) {

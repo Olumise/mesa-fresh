@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import {
-	addIngredient,
+	addIngredients,
 	addLocationIngredient,
 	addLocationMenu,
 	addMenuCategory,
@@ -10,8 +10,8 @@ import {
 	getAllMenu,
 	getLocationIngredients,
 	getLocationMenu,
+	getMenuReceipe,
 } from "../services/menu.js";
-import prisma from "../lib/prisma.js";
 import { AppError } from "../middlewares/errorHandler.js";
 
 export const addMenuCategoryController = async (
@@ -112,10 +112,11 @@ export const getLocationMenuController = async (
 ) => {
 	try {
 		const { locationId } = req.params;
+		const { menu_id } = req.query;
 		if (!locationId) {
 			throw new Error("Location Id is required!");
 		}
-		const locationMenus = await getLocationMenu(locationId);
+		const locationMenus = await getLocationMenu(locationId, menu_id as string | undefined);
 		res.json({
 			no_of_menu: locationMenus.length,
 			data: locationMenus,
@@ -125,15 +126,15 @@ export const getLocationMenuController = async (
 	}
 };
 
-export const addIngredientController = async (
+export const addIngredientsController = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ) => {
 	try {
-		const newIngredient = await addIngredient(req.body);
+		const newIngredient = await addIngredients(req.body);
 		res.json({
-			message: "New Ingredient added successfully",
+			message: "New Ingredients added successfully",
 			data: newIngredient,
 		});
 	} catch (err) {
@@ -146,34 +147,22 @@ export const addLocationIngredientController = async (
 	res: Response,
 	next: NextFunction
 ) => {
-	const { location_menu_id } = req.body;
-	const userInfo = req.user?.user;
-	if (!userInfo?.id) {
-		throw new AppError(401, "Unauthorized User!");
+	const { locationId } = req.params;
+	if (!locationId) {
+		throw new AppError(400, "Location ID is required!");
 	}
 
+	const ingredientsArray = Array.isArray(req.body) ? req.body : [req.body];
+	const ingredientsData = ingredientsArray.map((ing) => ({
+		...ing,
+		location_id: locationId,
+	}));
+
 	try {
-		const locMenu = await prisma.locationMenu.findUnique({
-			where: {
-				id: location_menu_id,
-			},
-		});
-		if (!locMenu) {
-			throw new AppError(404, "Location Menu not found!");
-		}
-		const staff = await prisma.staff.findFirst({
-			where: {
-				user_id: userInfo?.id,
-				location_id: locMenu.location_id,
-			},
-		});
-		if (!staff) {
-			throw new AppError(403, "User not assigned to this Location");
-		}
-		const locationIngredient = await addLocationIngredient(req.body);
+		const locationIngredients = await addLocationIngredient(ingredientsData);
 		res.json({
-			message: `New Ingredient added for the ${locationIngredient.location_menu.menu.name} menu in the ${locationIngredient.location_menu.location.name} location !`,
-			data: locationIngredient,
+			message: `New Ingredients added successfully!`,
+			data: locationIngredients,
 		});
 	} catch (err: any) {
 		next(err);
@@ -202,15 +191,32 @@ export const getLocationIngredientsController = async (
 	next: NextFunction
 ) => {
 	try {
-		const { locationMenuId } = req.params;
-		if (!locationMenuId) {
-			throw new Error("LocationMenuId is required!");
+		const { locationId } = req.params;
+		if (!locationId) {
+			throw new Error("Location Id is required!");
 		}
-		const ingredients = await getLocationIngredients(locationMenuId);
+		const ingredients = await getLocationIngredients(locationId);
 		res.json({
 			no_of_ingredients: ingredients.length,
 			data: ingredients,
 		});
+	} catch (err) {
+		next(err);
+	}
+};
+
+export const getMenuReceipeController = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const { menuId } = req.params;
+		if (!menuId) {
+			throw new AppError(400, "menuId is required!");
+		}
+		const receipes = await getMenuReceipe(menuId);
+		res.send(receipes);
 	} catch (err) {
 		next(err);
 	}

@@ -7,16 +7,16 @@ import {
 	MenuAddon,
 	Ingredient,
 	LocationIngredient,
+	Prisma,
 } from "../../generated/prisma/client.js";
 import {
 	validateMenuInput,
 	validateLocationMenuInputs,
 	validateNewAddonInputs,
 	validateMenuCategoryInput,
-	validateLocationMenuIngredient,
 } from "../lib/validate.js";
 import { prismaError } from "prisma-better-errors";
-import { AppError } from "../middlewares/errorHandler.js";
+import menuRouter from "../routes/menu.js";
 
 export interface UpdatedMenu extends Omit<Menu, "category_id"> {
 	category_name?: string;
@@ -25,10 +25,37 @@ export interface UpdatedMenu extends Omit<Menu, "category_id"> {
 	addons?: { addon_id: string }[];
 	ingredients: {
 		ingredient_id: string;
-		ingredient_per_unit: number;
+		quantity: number;
 		unit: string;
 	}[];
 }
+export interface UpdatedAddon extends Addon {
+	ingredients: {
+		ingredient_id: string;
+		quantity: number;
+		unit: string;
+	}[];
+}
+
+
+export const addIngredients = async (data: Ingredient[]) => {
+	if (!Array.isArray(data) || data.length === 0) {
+		throw new Error("Ingredients data required!");
+	}
+	for (const { name } of data) {
+		if (!name) {
+			throw new Error("Name is required!");
+		}
+	}
+	try {
+		const newIngredients = await prisma.ingredient.createManyAndReturn({
+			data,
+		});
+		return newIngredients;
+	} catch (err: any) {
+		throw new prismaError(err);
+	}
+};
 
 export const addMenuCategory = async (data: MenuCategory) => {
 	validateMenuCategoryInput(data);
@@ -66,7 +93,6 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 			price,
 			description,
 			image,
-			category_id,
 			calories,
 			prep_time,
 			is_customizable,
@@ -74,25 +100,26 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 				create: ingredients,
 			},
 		};
-		if (!category_id && !category_name) {
-			throw new Error("Category Id or Category Name is required!");
-		}
+
 		if (category_name) {
-			queryData = {
-				name,
-				price,
-				description,
-				image,
-				category: {
-					create: {
-						name: category_name,
-						description: category_description || null,
-					},
+			queryData.category = {
+				create: {
+					name: category_name,
+					description: category_description || null,
 				},
-				calories,
-				prep_time,
-				is_customizable,
 			};
+		} else if (category_id) {
+			const category = await prisma.menuCategory.findUnique({
+				where: {
+					id: category_id,
+				},
+			});
+			if (!category) {
+				throw new Error(`Category with id of ${category_id} not found!`);
+			}
+			queryData.category_id = category_id;
+		} else {
+			throw new Error("Category Id or Category Name is required!");
 		}
 		if (addons && addons.length > 0) {
 			queryData = {
@@ -111,7 +138,10 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 		});
 		return newMenu;
 	} catch (err: any) {
-		throw new prismaError(err);
+		if (err instanceof Prisma.PrismaClientKnownRequestError) {
+			throw new prismaError(err);
+		}
+		throw new Error(err);
 	}
 };
 
@@ -120,12 +150,20 @@ export const getAllMenu = async () => {
 	return allMenu;
 };
 
-export const addNewAddon = async (data: Addon) => {
-	const { name, price, is_free } = data;
+export const addNewAddon = async (data: UpdatedAddon) => {
+	validateNewAddonInputs(data);
+	const { name, price, is_free, ingredients } = data;
+	const queryData: any = {
+		name,
+		price,
+		is_free,
+		addon_ingredients: {
+			create: ingredients,
+		},
+	};
 	try {
-		validateNewAddonInputs(data);
 		const newAddon = await prisma.addon.create({
-			data,
+			data: queryData,
 		});
 		return newAddon;
 	} catch (err: any) {
@@ -134,27 +172,16 @@ export const addNewAddon = async (data: Addon) => {
 };
 
 export const addLocationMenu = async (data: LocationMenu) => {
-	const { location_id, menu_id, is_available, quantity } = data;
 	validateLocationMenuInputs(data);
-	try {
-		const newLocationMenu = await prisma.locationMenu.create({
-			data,
-			include: {
-				location: true,
-				menu: true,
-			},
-		});
-		return newLocationMenu;
-	} catch (err: any) {
-		throw new prismaError(err);
-	}
-};
+	const { location_id, menu_id, is_available, quantity } = data;
 
-export const getLocationMenu = async (locationId: string) => {
 	try {
-		const locationMenu = await prisma.locationMenu.findMany({
-			where: {
-				location_id: locationId,
+		const locationMenu = await prisma.locationMenu.create({
+			data: {
+				location_id,
+				menu_id,
+				is_available,
+				quantity,
 			},
 			include: {
 				location: true,
@@ -167,55 +194,64 @@ export const getLocationMenu = async (locationId: string) => {
 	}
 };
 
-export const addIngredient = async (data: Ingredient | Ingredient) => {
-	const { name, description } = data;
-	if (!name) {
-		throw new Error("Ingredient Name is required!");
-	}
+export const getLocationMenu = async (locationId: string, menuId?: string) => {
 	try {
-		const newIngredient = await prisma.ingredient.create({
-			data,
+		const whereClause: any = {
+			location_id: locationId,
+		};
+
+		if (menuId) {
+			whereClause.menu_id = menuId;
+		}
+
+		const locationMenu = await prisma.locationMenu.findMany({
+			where: whereClause,
+			include: {
+				menu: {
+					include: {
+						menu_ingredients: {
+							include: {
+								ingredient: true,
+							},
+						},
+					},
+				},
+			},
 		});
-		return newIngredient;
+		return locationMenu;
 	} catch (err: any) {
 		throw new prismaError(err);
 	}
 };
 
-export const addLocationIngredient = async (data: LocationIngredient) => {
-	const { location_menu_id, ingredient_id, quantity, unit } = data;
-	validateLocationMenuIngredient(data);
+export const addLocationIngredient = async (data: LocationIngredient[]) => {
+	if (!Array.isArray(data) || data.length === 0) {
+		throw new Error("Ingredients data required!");
+	}
 
 	try {
-		const locationMenu = await prisma.locationMenu.findUnique({
-			where: {
-				id: location_menu_id,
-			},
-		});
-		if (!locationMenu) {
-			throw new AppError(404, "Location Menu not found!");
-		}
-		const ingredient = await prisma.ingredient.findUnique({
-			where: {
-				id: ingredient_id,
-			},
-		});
-		if (!ingredient) {
-			throw new AppError(404, "Ingredient not found!");
-		}
-		const locationIngredient = await prisma.locationIngredient.create({
-			data,
-			include: {
-				location_menu: {
+		const results = await Promise.all(
+			data.map((ingredient) =>
+				prisma.locationIngredient.upsert({
+					where: {
+						location_id_ingredient_id: {
+							location_id: ingredient.location_id,
+							ingredient_id: ingredient.ingredient_id,
+						},
+					},
+					update: {
+						quantity: ingredient.quantity,
+						unit: ingredient.unit,
+					},
+					create: ingredient,
 					include: {
 						location: true,
-						menu: true,
+						ingredient: true,
 					},
-				},
-				ingredient: true,
-			},
-		});
-		return locationIngredient;
+				})
+			)
+		);
+		return results;
 	} catch (err: any) {
 		throw new prismaError(err);
 	}
@@ -229,20 +265,27 @@ export const getAllIngredients = async () => {
 	}
 };
 
-export const getLocationIngredients = async (locationMenuId: string) => {
+export const getLocationIngredients = async (locationId: string) => {
 	try {
 		return await prisma.locationIngredient.findMany({
 			where: {
-				location_menu_id: locationMenuId,
+				location_id: locationId,
 			},
 			include: {
-				location_menu: {
-					include: {
-						location: true,
-						menu: true,
-					},
-				},
+				location: true,
 				ingredient: true,
+			},
+		});
+	} catch (err: any) {
+		throw new prismaError(err);
+	}
+};
+
+export const getMenuReceipe = async (MenuId: string) => {
+	try {
+		return await prisma.menuIngredient.findMany({
+			where: {
+				menu_id: MenuId,
 			},
 		});
 	} catch (err: any) {

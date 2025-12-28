@@ -10,7 +10,15 @@ export const locationVerify = async (
 	try {
 		const { locationId } = req.params;
 		if (!locationId) {
-			throw new AppError(500, "Location Id required");
+			throw new AppError(400, "Location Id required");
+		}
+		const location = await prisma.location.findUnique({
+			where:{
+				id:locationId
+			}
+		})
+		if(!location){
+			throw new AppError(400,"Location does not exist!")
 		}
 		const userInfo = req?.user?.user;
 		if (!userInfo) {
