@@ -34,6 +34,7 @@ import { StaffExtendedInput } from "../services/staff.js";
 import { capitalizeString } from "./helper.js";
 import prisma from "./prisma.js";
 import { object } from "zod";
+import { CreateOrder, CreateOrderSchema } from "../schemas/order.js";
 
 export function validateLocationInput(data: Location) {
 	if (!data) {
@@ -168,4 +169,12 @@ export function validateManagerInput(data: Manager) {
 		throw new Error("No data in your request!");
 	}
 	return CreateManagerSchema.parse(data);
+}
+
+export function validateCreateOrderInput(data: CreateOrder) {
+	if (!data) {
+		throw new Error("No data in your request!");
+	}
+
+	return CreateOrderSchema.parse(data);
 }

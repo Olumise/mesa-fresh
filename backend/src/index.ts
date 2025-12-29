@@ -12,6 +12,7 @@ import authRouter from "./routes/auth.js";
 import profileRouter from "./routes/profile.js";
 import staffRouter from "./routes/staff.js";
 import uploadRouter from "./routes/upload.js";
+import orderRouter from "./routes/order.js";
 
 // app.all("/api/auth/*splat", toNodeHandler(auth));
 
@@ -24,6 +25,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/upload", uploadRouter);
+app.use("/api/order", orderRouter);
 
 app.use(ErrorHandler);
 app.listen(PORT, () => {

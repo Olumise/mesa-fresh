@@ -37,7 +37,6 @@ export interface UpdatedAddon extends Addon {
 	}[];
 }
 
-
 export const addIngredients = async (data: Ingredient[]) => {
 	if (!Array.isArray(data) || data.length === 0) {
 		throw new Error("Ingredients data required!");
@@ -146,7 +145,9 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 };
 
 export const getAllMenu = async () => {
-	const allMenu = await prisma.menu.findMany();
+	const allMenu = await prisma.menu.findMany({
+		include: { menu_addons: true },
+	});
 	return allMenu;
 };
 
@@ -171,24 +172,105 @@ export const addNewAddon = async (data: UpdatedAddon) => {
 	}
 };
 
+interface IngredientRequirement {
+	ingredient_id: string;
+	total_quantity: number;
+	unit: string;
+	tracking_type: string;
+}
+
+const calculateLocationMenuIngredients = async (
+	menu_id: string,
+	location_menu_quantity: number,
+	tx?: any
+): Promise<IngredientRequirement[]> => {
+	const client = tx || prisma;
+
+	const menuIngredients = await client.menuIngredient.findMany({
+		where: { menu_id },
+		include: {
+			ingredient: {
+				select: {
+					id: true,
+					tracking_type: true,
+				},
+			},
+		},
+	});
+
+	return menuIngredients.map((mi: any) => ({
+		ingredient_id: mi.ingredient_id,
+		total_quantity: mi.quantity * location_menu_quantity,
+		unit: mi.unit,
+		tracking_type: mi.ingredient.tracking_type,
+	}));
+};
+
+const upsertLocationIngredientsWithIncrement = async (
+	tx: any,
+	location_id: string,
+	ingredients: IngredientRequirement[]
+): Promise<void> => {
+	await Promise.all(
+		ingredients.map((ing) =>
+			tx.locationIngredient.upsert({
+				where: {
+					location_id_ingredient_id: {
+						location_id,
+						ingredient_id: ing.ingredient_id,
+					},
+				},
+				update: {
+					quantity: { increment: ing.total_quantity },
+					unit: ing.unit,
+				},
+				create: {
+					location_id,
+					ingredient_id: ing.ingredient_id,
+					quantity: ing.total_quantity,
+					unit: ing.unit,
+					tracking_type: ing.tracking_type,
+				},
+			})
+		)
+	);
+};
+
 export const addLocationMenu = async (data: LocationMenu) => {
 	validateLocationMenuInputs(data);
 	const { location_id, menu_id, is_available, quantity } = data;
 
 	try {
-		const locationMenu = await prisma.locationMenu.create({
-			data: {
-				location_id,
+		return await prisma.$transaction(async (tx) => {
+			const locationMenu = await tx.locationMenu.create({
+				data: {
+					location_id,
+					menu_id,
+					is_available,
+					quantity,
+				},
+				include: {
+					location: true,
+					menu: true,
+				},
+			});
+
+			const ingredientRequirements = await calculateLocationMenuIngredients(
 				menu_id,
-				is_available,
 				quantity,
-			},
-			include: {
-				location: true,
-				menu: true,
-			},
+				tx
+			);
+
+			if (ingredientRequirements.length > 0) {
+				await upsertLocationIngredientsWithIncrement(
+					tx,
+					location_id,
+					ingredientRequirements
+				);
+			}
+
+			return locationMenu;
 		});
-		return locationMenu;
 	} catch (err: any) {
 		throw new prismaError(err);
 	}
@@ -214,6 +296,7 @@ export const getLocationMenu = async (locationId: string, menuId?: string) => {
 								ingredient: true,
 							},
 						},
+						menu_addons: true,
 					},
 				},
 			},

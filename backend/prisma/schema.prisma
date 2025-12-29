@@ -14,20 +14,21 @@ datasource db {
 }
 
 model User {
-  id            String            @id @default(uuid())
-  name          String
-  email         String
-  image         String?
-  phone         String
-  emailVerified Boolean           @default(false) @map("email_verified")
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
-  roleId        String
-  role          DBRole            @relation(fields: [roleId], references: [id])
-  sessions      Session[]
-  accounts      Account[]
-  staffs        Staff[]
-  invitations   StaffInvitation[]
+  id             String            @id @default(uuid())
+  name           String
+  email          String
+  image          String?
+  phone          String
+  emailVerified  Boolean           @default(false) @map("email_verified")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  roleId         String
+  role           DBRole            @relation(fields: [roleId], references: [id])
+  sessions       Session[]
+  accounts       Account[]
+  staffs         Staff[]
+  invitations    StaffInvitation[]
+  customer_orders Order[]
 
   @@unique([email])
   @@map("users")
@@ -63,21 +64,24 @@ model StaffInvitation {
 }
 
 model Staff {
-  id            String          @id @default(uuid())
-  user_id       String          @unique
-  user          User            @relation(fields: [user_id], references: [id])
-  location_id   String
-  location      Location        @relation(fields: [location_id], references: [id])
-  date_joined   DateTime
-  date_left     DateTime?
-  is_active     Boolean
-  role_id       String
-  role          StaffRole       @relation(fields: [role_id], references: [id])
-  invitation_id String          @unique
-  invitation    StaffInvitation @relation(fields: [invitation_id], references: [id])
-  managers      Manager[]
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
+  id                   String               @id @default(uuid())
+  user_id              String               @unique
+  user                 User                 @relation(fields: [user_id], references: [id])
+  location_id          String
+  location             Location             @relation(fields: [location_id], references: [id])
+  date_joined          DateTime
+  date_left            DateTime?
+  is_active            Boolean
+  role_id              String
+  role                 StaffRole            @relation(fields: [role_id], references: [id])
+  invitation_id        String               @unique
+  invitation           StaffInvitation      @relation(fields: [invitation_id], references: [id])
+  managers             Manager[]
+  orders_created       Order[]              @relation("OrderCreatedBy")
+  payments_processed   Payment[]
+  order_status_changes OrderStatusHistory[]
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
 
   @@unique([user_id, location_id])
   @@map("staffs")
@@ -110,6 +114,7 @@ model Location {
   updatedAt           DateTime             @updatedAt @map("updated_at")
   staffInvitations    StaffInvitation[]
   locationIngredients LocationIngredient[]
+  orders              Order[]
 
   @@unique(name)
   @@map("locations")
@@ -133,7 +138,7 @@ model Menu {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
   name             String           @unique
-  price            Decimal @db.Decimal(10, 2)
+  price            Decimal          @db.Decimal(10, 2)
   description      String
   image            String
   category_id      String
@@ -144,19 +149,21 @@ model Menu {
   location_menus   LocationMenu[]
   menu_addons      MenuAddon[]
   menu_ingredients MenuIngredient[]
+  order_items      OrderItem[]
 
   @@map("menus")
 }
 
 model Addon {
-  id                String            @id @default(uuid())
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-  name              String            @unique
-  price             Decimal           @default(0.0)
-  is_free           Boolean
-  menu_addons       MenuAddon[]
-  addon_ingredients AddonIngredient[]
+  id                 String             @id @default(uuid())
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  name               String             @unique
+  price              Decimal            @default(0.0)
+  is_free            Boolean
+  menu_addons        MenuAddon[]
+  addon_ingredients  AddonIngredient[]
+  order_item_addons  OrderItemAddon[]
 
   @@map("addons")
 }
@@ -314,4 +321,124 @@ enum IngredientUnit {
 enum IngredientTrackingType {
   PRECISE
   ESTIMATED
+}
+
+enum OrderStatus {
+  PENDING    @map("pending")
+  PREPARING  @map("preparing")
+  READY      @map("ready")
+  COMPLETED  @map("completed")
+  CANCELLED  @map("cancelled")
+}
+
+enum PaymentMethod {
+  POS      @map("pos")
+  TRANSFER @map("transfer")
+  CASH     @map("cash")
+}
+
+enum PaymentStatus {
+  PENDING   @map("pending")
+  COMPLETED @map("completed")
+  FAILED    @map("failed")
+  REFUNDED  @map("refunded")
+}
+
+model Order {
+  id            String               @id @default(uuid())
+  order_number  String               @unique
+  location_id   String
+  location      Location             @relation(fields: [location_id], references: [id])
+  customer_id   String?
+  customer      User?                @relation(fields: [customer_id], references: [id])
+  customer_name String?
+  created_by_id String
+  created_by    Staff                @relation("OrderCreatedBy", fields: [created_by_id], references: [id])
+  status        OrderStatus          @default(PENDING)
+  subtotal      Decimal              @db.Decimal(10, 2)
+  tax           Decimal              @default(0.0) @db.Decimal(10, 2)
+  total         Decimal              @db.Decimal(10, 2)
+  notes         String?
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  completed_at  DateTime?
+  cancelled_at  DateTime?
+  order_items   OrderItem[]
+  payment       Payment?
+  status_history OrderStatusHistory[]
+
+  @@index([location_id])
+  @@index([customer_id])
+  @@index([created_by_id])
+  @@index([order_number])
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String           @id @default(uuid())
+  order_id         String
+  order            Order            @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  menu_id          String
+  menu             Menu             @relation(fields: [menu_id], references: [id])
+  quantity         Int
+  unit_price       Decimal          @db.Decimal(10, 2)
+  subtotal         Decimal          @db.Decimal(10, 2)
+  special_notes    String?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  order_item_addons OrderItemAddon[]
+
+  @@index([order_id])
+  @@index([menu_id])
+  @@map("order_items")
+}
+
+model OrderItemAddon {
+  id            String    @id @default(uuid())
+  order_item_id String
+  order_item    OrderItem @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
+  addon_id      String
+  addon         Addon     @relation(fields: [addon_id], references: [id])
+  quantity      Int       @default(1)
+  unit_price    Decimal   @db.Decimal(10, 2)
+  subtotal      Decimal   @db.Decimal(10, 2)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([order_item_id])
+  @@index([addon_id])
+  @@map("order_item_addons")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  order_id        String        @unique
+  order           Order         @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  amount          Decimal       @db.Decimal(10, 2)
+  payment_method  PaymentMethod
+  payment_status  PaymentStatus @default(PENDING)
+  transaction_ref String?
+  processed_by_id String
+  processed_by    Staff         @relation(fields: [processed_by_id], references: [id])
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  completed_at    DateTime?
+
+  @@index([order_id])
+  @@index([processed_by_id])
+  @@map("payments")
+}
+
+model OrderStatusHistory {
+  id            String       @id @default(uuid())
+  order_id      String
+  order         Order        @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  from_status   OrderStatus?
+  to_status     OrderStatus
+  changed_by_id String
+  changed_by    Staff        @relation(fields: [changed_by_id], references: [id])
+  notes         String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@index([order_id])
+  @@map("order_status_history")
 }

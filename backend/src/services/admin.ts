@@ -42,6 +42,17 @@ export const inviteUser = async (data: any) => {
 		if (!inviter) {
 			throw new Error("The Inviter does not exist!");
 		}
+
+		
+		const existingUser = await prisma.user.findUnique({
+			where: {
+				email: invited_email,
+			},
+		});
+		if (existingUser) {
+			throw new Error("A user with this email already exists!");
+		}
+
 		const newInvitation = await prisma.staffInvitation.create({
 			data: {
 				invited_email,
