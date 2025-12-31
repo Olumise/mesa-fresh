@@ -34,7 +34,7 @@ import { StaffExtendedInput } from "../services/staff.js";
 import { capitalizeString } from "./helper.js";
 import prisma from "./prisma.js";
 import { object } from "zod";
-import { CreateOrder, CreateOrderSchema } from "../schemas/order.js";
+import { CreateOrder, CreateOrderSchema, UpdatePaymentStatus, UpdatePaymentStatusSchema } from "../schemas/order.js";
 
 export function validateLocationInput(data: Location) {
 	if (!data) {
@@ -177,4 +177,12 @@ export function validateCreateOrderInput(data: CreateOrder) {
 	}
 
 	return CreateOrderSchema.parse(data);
+}
+
+export function validateUpdatePaymentStatus(data: UpdatePaymentStatus) {
+	if (!data) {
+		throw new Error("No data in your request!");
+	}
+
+	return UpdatePaymentStatusSchema.parse(data);
 }
