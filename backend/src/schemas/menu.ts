@@ -51,6 +51,8 @@ export const MenuSchema = z
 
 		category_description: z.string("Category ID should be a string").optional(),
 
+		category_color: z.string("Category Color should be a string").optional(),
+
 		ingredients: z.array(ingredientMenuSchema),
 	})
 	.refine(
@@ -67,6 +69,8 @@ export const MenuCategorySchema = z.object({
 	name: z.string("Name should be a string").min(1, "Category name is required"),
 
 	description: z.string("Description should be a string").optional(),
+
+	color: z.string("Color should be a string").min(1, "Category color is required"),
 });
 
 export const AddonSchema = z

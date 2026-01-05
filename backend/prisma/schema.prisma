@@ -201,6 +201,7 @@ model MenuCategory {
   updatedAt   DateTime @updatedAt @map("updated_at")
   name        String   @unique
   description String?
+  color       String   @default("#4AA651")
   menus       Menu[]
 
   @@map("menu_categories")

@@ -21,6 +21,7 @@ import menuRouter from "../routes/menu.js";
 export interface UpdatedMenu extends Omit<Menu, "category_id"> {
 	category_name?: string;
 	category_description?: string;
+	category_color?: string;
 	category_id?: string;
 	addons?: { addon_id: string }[];
 	ingredients: {
@@ -59,10 +60,14 @@ export const addIngredients = async (data: Ingredient[]) => {
 export const addMenuCategory = async (data: MenuCategory) => {
 	validateMenuCategoryInput(data);
 	try {
-		const { name, description } = data;
+		const { name, description, color } = data;
 
 		const newCategory = await prisma.menuCategory.create({
-			data,
+			data: {
+				name,
+				description,
+				color,
+			},
 		});
 		return newCategory;
 	} catch (err: any) {
@@ -85,6 +90,7 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 			addons,
 			category_name,
 			category_description,
+			category_color,
 			ingredients,
 		} = data;
 		let queryData: any = {
@@ -105,6 +111,7 @@ export const addNewMenu = async (data: UpdatedMenu) => {
 				create: {
 					name: category_name,
 					description: category_description || null,
+					color: category_color,
 				},
 			};
 		} else if (category_id) {
